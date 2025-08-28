@@ -1,0 +1,28 @@
+auth:
+  provider: none
+components:
+  auto_discovery:
+    enabled: true
+    ignore_patterns:
+    - __pycache__
+    - '*.pyc'
+    - __init__.py
+    scan_directories:
+    - tools
+    - resources
+    - prompts
+  prompts: []
+  resources: []
+  tools: []
+management:
+  expose_management_tools: true
+mcpServers: {}
+middleware: []
+server:
+  instructions: This is mcp-inspector-server - MCP服务器检查和诊断工具，用于分析MCP服务器的能力、配置和运行状态
+  name: mcp-inspector-server
+transport:
+  host: localhost
+  log_level: DEBUG
+  port: 8000
+  transport: stdio
