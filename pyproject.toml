@@ -25,9 +25,9 @@ line-length = 88
 target-version = "py310"
 
 [tool.mcp-servers-hub]
-name = ""
-description = "MCP server: mcp-inspector-serveruv run python -m mcp_factory.cli.main project publish workspace/projects/mcp-inspector-server"
-author = ""
+name = "mcp-inspector-server"
+description = "MCP Inspector Server - A comprehensive MCP server testing and validation system"
+author = "ACNet-AI"
 github_username = "ACNet-AI"
 categories = [ "tools",]
 installation_id = "77170704"
