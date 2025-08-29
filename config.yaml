@@ -11,15 +11,31 @@ components:
     - tools
     - resources
     - prompts
-  prompts: []
-  resources: []
-  tools: []
+  tools:
+  - description: 'MCP Inspector Tools
+
+      Professional MCP server testing and inspection tools'
+    module: tools/mcp_inspector_tools.py
+    enabled: true
+  resources:
+  - description: 'MCP Inspector Resources
+
+      Essential documentation and repository information resources'
+    module: resources/mcp_inspector_resources.py
+    enabled: true
+  prompts:
+  - description: 'MCP Inspector Guidance Prompts
+
+      Professional guidance system for MCP server inspection workflows'
+    module: prompts/inspector_guidance.py
+    enabled: true
 management:
   expose_management_tools: true
 mcpServers: {}
 middleware: []
 server:
-  instructions: This is mcp-inspector-server - MCP服务器检查和诊断工具，用于分析MCP服务器的能力、配置和运行状态
+  instructions: This is mcp-inspector-server - MCP server inspection and diagnostic
+    tool for analyzing MCP server capabilities, configuration, and runtime status
   name: mcp-inspector-server
 transport:
   host: localhost

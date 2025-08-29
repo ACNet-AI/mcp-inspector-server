@@ -6,10 +6,26 @@ MCP server: mcp-inspector-server
 
 ```bash
 # Install dependencies
-pip install -e .
+uv sync
 
 # Start server
-python server.py
+uv run python server.py
+```
+
+## Configuration
+
+Add to your Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "mcp-inspector-server": {
+      "command": "uv",
+      "args": ["run", "python", "server.py"],
+      "cwd": "/path/to/mcp-inspector-server"
+    }
+  }
+}
 ```
 
 ## Project Structure

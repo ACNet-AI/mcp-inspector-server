@@ -19,21 +19,23 @@ from mcp_factory.server import ManagedServer
 
 class ConfigurationError(Exception):
     """Configuration error"""
+
     pass
+
 
 def load_config():
     """Load and validate configuration"""
     config_path = Path(__file__).parent / "config.yaml"
     try:
-        with open(config_path, encoding='utf-8') as f:
+        with open(config_path, encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         # Validate required configuration
-        if not config or 'server' not in config:
+        if not config or "server" not in config:
             raise ConfigurationError("Invalid configuration: missing 'server' section")
 
-        server_config = config['server']
-        if 'name' not in server_config:
+        server_config = config["server"]
+        if "name" not in server_config:
             raise ConfigurationError("Invalid configuration: missing 'server.name'")
 
         return config
@@ -45,24 +47,28 @@ def load_config():
         print(f"Error: {e}")
         sys.exit(1)
 
+
 def create_server(config):
     """Create and configure the ManagedServer"""
-    server_config = config['server']
-    management_config = config.get('management', {})
+    server_config = config["server"]
+    management_config = config.get("management", {})
 
     # Create server with basic configuration first
     server_params = {
-        'name': server_config['name'],
-        'instructions': server_config.get('instructions', ''),
-        'expose_management_tools': management_config.get('expose_management_tools', True)
+        "name": server_config["name"],
+        "instructions": server_config.get("instructions", ""),
+        "expose_management_tools": management_config.get(
+            "expose_management_tools", True
+        ),
     }
 
     # Load middleware from configuration
     try:
         from mcp_factory.middleware import load_middleware_from_config
+
         middleware_instances = load_middleware_from_config(config)
         if middleware_instances:
-            server_params['middleware'] = middleware_instances
+            server_params["middleware"] = middleware_instances
             print(f"✅ Loaded {len(middleware_instances)} middleware(s)")
     except ImportError:
         print("⚠️  Middleware support not available, skipping middleware loading")
@@ -72,9 +78,10 @@ def create_server(config):
     server = ManagedServer(**server_params)
 
     # Configure external servers if present
-    if 'mcpServers' in config:
+    if "mcpServers" in config:
         try:
             from mcp_factory.mounting import ServerRegistry
+
             registry = ServerRegistry(server)
             server_configs = registry.parse_external_servers_config(config)
             registry.register_servers(server_configs)
@@ -92,10 +99,12 @@ def create_server(config):
 
     return server
 
+
 def register_components(server):
     """Register project components using ComponentManager"""
     try:
         from mcp_factory.project.components import ComponentManager
+
         project_path = Path(__file__).parent
 
         # Check if auto-discovery is enabled
@@ -105,10 +114,12 @@ def register_components(server):
         if auto_discovery_config.get("enabled", False):
             # Auto-discover components and update server config
             print("🔍 Auto-discovering project components...")
-            discovered_components = ComponentManager.discover_project_components(project_path)
+            discovered_components = ComponentManager.discover_project_components(
+                project_path
+            )
 
             if discovered_components:
-                # 智能合并：保留手动配置，添加新发现的组件
+                # Smart merge: preserve manual configuration, add newly discovered components
                 if "components" not in config:
                     config["components"] = {}
 
@@ -117,16 +128,16 @@ def register_components(server):
                     existing_items = config["components"].get(comp_type, [])
                     existing_modules = {item.get("module") for item in existing_items}
 
-                    # 确保所有现有组件都有enabled属性
+                    # Ensure all existing components have enabled attribute
                     for existing_item in existing_items:
                         if "enabled" not in existing_item:
                             existing_item["enabled"] = True
                             config_updated = True
 
-                    # 只添加不存在的组件，基于module路径去重
+                    # Only add non-existing components, deduplicate based on module path
                     for discovered_item in discovered_items:
                         if discovered_item.get("module") not in existing_modules:
-                            # 新发现的组件默认启用
+                            # Newly discovered components are enabled by default
                             discovered_item["enabled"] = True
                             existing_items.append(discovered_item)
                             config_updated = True
@@ -135,12 +146,34 @@ def register_components(server):
 
                 server._config = config
 
-                # 不再写回配置文件，保持配置的静态性和纯净性
-                # auto_discovery 在运行时发现组件，直接在内存中使用
-                print("💾 组件仅在内存中注册，配置文件保持静态")
+                # Write updated configuration back to disk - this is a required step for component registration
+                if config_updated:
+                    config_path = project_path / "config.yaml"
+                    try:
+                        import yaml
 
-                total_discovered = sum(len(comps) for comps in discovered_components.values())
-                print(f"📦 Discovered {total_discovered} components: {', '.join(f'{len(comps)} {name}' for name, comps in discovered_components.items())}")
+                        with open(config_path, "w", encoding="utf-8") as f:
+                            yaml.dump(
+                                config,
+                                f,
+                                default_flow_style=False,
+                                allow_unicode=True,
+                                sort_keys=False,
+                            )
+                        print("💾 Configuration file updated")
+                    except Exception as e:
+                        print(f"⚠️ Configuration file write failed: {e}")
+                else:
+                    print(
+                        "💾 Configuration file does not need update (no new components)"
+                    )
+
+                total_discovered = sum(
+                    len(comps) for comps in discovered_components.values()
+                )
+                print(
+                    f"📦 Discovered {total_discovered} components: {', '.join(f'{len(comps)} {name}' for name, comps in discovered_components.items())}"
+                )
             else:
                 print("📂 No components found in project directories")
 
@@ -153,6 +186,7 @@ def register_components(server):
     except Exception as e:
         print(f"⚠️  Component registration failed: {e}")
         print("💡 You can still add tools manually using @server.tool()")
+
 
 def main():
     """Main entry point"""
@@ -175,12 +209,12 @@ def main():
 
     try:
         # Get transport configuration
-        transport_config = config.get('transport', {})
-        transport = transport_config.get('transport', 'stdio')
+        transport_config = config.get("transport", {})
+        transport = transport_config.get("transport", "stdio")
 
-        if transport in ['sse', 'streamable-http']:
-            host = transport_config.get('host', '127.0.0.1')
-            port = transport_config.get('port', 8000)
+        if transport in ["sse", "streamable-http"]:
+            host = transport_config.get("host", "127.0.0.1")
+            port = transport_config.get("port", 8000)
             print(f"🌐 Server will start on: {transport}://{host}:{port}")
             server.run(transport=transport, host=host, port=port)
         else:
@@ -191,6 +225,7 @@ def main():
     except Exception as e:
         print(f"❌ Server error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
